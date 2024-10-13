@@ -8,6 +8,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "LSCharacterControlData.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Components/TimelineComponent.h"
 
 ALSCharacterPlayer::ALSCharacterPlayer()
 {
@@ -40,7 +42,23 @@ ALSCharacterPlayer::ALSCharacterPlayer()
 		ShoulderLookAction = InputActionShoulderLookRef.Object;
 	}
 
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShoulderCrouchRef(TEXT("/Script/EnhancedInput.InputAction'/Game/ProjectLS/Input/Actions/IA_Crouch_Shoulder.IA_Crouch_Shoulder'"));
+	if (nullptr != InputActionShoulderCrouchRef.Object)
+	{
+		ShoulderCrouchAction = InputActionShoulderCrouchRef.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UCurveFloat> StandToCrouchCurveRef(TEXT("/Script/Engine.CurveFloat'/Game/ProjectLS/Curve/FC_StandToCrouch.FC_StandToCrouch'"));
+	if (nullptr != StandToCrouchCurveRef.Object)
+	{
+		StandToCrouchCurve = StandToCrouchCurveRef.Object;
+	}
+
 	CurrentCharacterControlType = ECharacterControlType::Shoulder;
+
+	StandToCrouchTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("StandToCrouchTimeline"));
+	
+	
 }
 
 void ALSCharacterPlayer::BeginPlay()
@@ -48,6 +66,12 @@ void ALSCharacterPlayer::BeginPlay()
 	Super::BeginPlay();
 
 	SetCharacterControl(CurrentCharacterControlType);
+
+	FOnTimelineFloat StandToCrouchCallback;
+	StandToCrouchCallback.BindUFunction(this, FName("SetCameraBoomHeight"));
+	StandToCrouchTimeline->SetLooping(false);
+	StandToCrouchTimeline->AddInterpFloat(StandToCrouchCurve, StandToCrouchCallback);
+	StandToCrouchTimeline->SetTimelineLength(0.35f);
 }
 
 void ALSCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -60,6 +84,8 @@ void ALSCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 	EnhancedInputComponent->BindAction(ShoulderMoveAction, ETriggerEvent::Triggered, this, &ALSCharacterPlayer::ShoulderMove);
 	EnhancedInputComponent->BindAction(ShoulderLookAction, ETriggerEvent::Triggered, this, &ALSCharacterPlayer::ShoulderLook);
+	EnhancedInputComponent->BindAction(ShoulderCrouchAction, ETriggerEvent::Started, this, &ALSCharacterPlayer::ShoulderStandToCrouch);
+	EnhancedInputComponent->BindAction(ShoulderCrouchAction, ETriggerEvent::Completed, this, &ALSCharacterPlayer::ShoulderCrouchToStand);
 }
 
 void ALSCharacterPlayer::SetCharacterControl(ECharacterControlType NewCharacterControlType)
@@ -98,6 +124,11 @@ void ALSCharacterPlayer::SetCharacterControlData(const ULSCharacterControlData* 
 	CameraBoom->SetRelativeLocation(CharacterControlData->SpringArmLocation);
 }
 
+void ALSCharacterPlayer::SetCameraBoomHeight(float Z)
+{
+	CameraBoom->SetRelativeLocation(FVector(0.f, 0.f, Z));
+}
+
 void ALSCharacterPlayer::ShoulderMove(const FInputActionValue& Value)
 {
 	FVector2D MovementVector = Value.Get<FVector2D>();
@@ -124,5 +155,35 @@ void ALSCharacterPlayer::ShoulderLook(const FInputActionValue& Value)
 	{
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+void ALSCharacterPlayer::ShoulderStandToCrouch()
+{
+	bIsCrouching = true;
+	GetCharacterMovement()->MaxWalkSpeed = 150.0f;
+
+	if (StandToCrouchTimeline->IsPlaying())
+	{
+		StandToCrouchTimeline->Play();
+	}
+	else
+	{
+		StandToCrouchTimeline->PlayFromStart();
+	}
+}
+
+void ALSCharacterPlayer::ShoulderCrouchToStand()
+{
+	bIsCrouching = false;
+	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
+	
+	if (StandToCrouchTimeline->IsPlaying())
+	{
+		StandToCrouchTimeline->Reverse();
+	}
+	else
+	{
+		StandToCrouchTimeline->ReverseFromEnd();
 	}
 }

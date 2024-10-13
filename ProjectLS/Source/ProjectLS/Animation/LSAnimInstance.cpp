@@ -39,5 +39,6 @@ void ULSAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (Owner)
 	{
 		PitchRotator = FRotator(0.f, 0.f, (Owner->GetBaseAimRotation().Pitch) / -5.0f);
+		bIsCrouching = Owner->IsCrouching();
 	}
 }

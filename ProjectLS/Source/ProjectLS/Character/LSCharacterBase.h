@@ -29,4 +29,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Equipment, Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USkeletalMeshComponent> WeaponRifle;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Character)
+	uint8 bIsCrouching : 1;
+
+public:
+	FORCEINLINE bool IsCrouching() const { return bIsCrouching; }
 };

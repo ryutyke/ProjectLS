@@ -52,6 +52,8 @@ ALSCharacterBase::ALSCharacterBase()
 
 	WeaponRifle = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponRifle"));
 	WeaponRifle->SetupAttachment(GetMesh(), TEXT("RifleSocket"));
+
+	bIsCrouching = false;
 }
 
 void ALSCharacterBase::SetCharacterControlData(const ULSCharacterControlData* CharacterControlData)

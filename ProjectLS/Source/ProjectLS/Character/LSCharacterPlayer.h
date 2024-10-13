@@ -12,6 +12,8 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
+class UCurveFloat;
+class UTimelineComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -60,11 +62,27 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* ShoulderLookAction;
 
+	/** Crouch Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* ShoulderCrouchAction;
+
 	ECharacterControlType CurrentCharacterControlType;
+
+	// TimeLine
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Timeline, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UTimelineComponent> StandToCrouchTimeline;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Timeline, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UCurveFloat> StandToCrouchCurve;
+
+	UFUNCTION()
+	void SetCameraBoomHeight(float Z);
 
 protected:
 	void ShoulderMove(const FInputActionValue& Value);
 	void ShoulderLook(const FInputActionValue& Value);
+	void ShoulderStandToCrouch();
+	void ShoulderCrouchToStand();
 
 public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
