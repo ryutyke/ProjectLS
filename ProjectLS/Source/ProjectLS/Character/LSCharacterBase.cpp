@@ -54,6 +54,8 @@ ALSCharacterBase::ALSCharacterBase()
 	WeaponRifle->SetupAttachment(GetMesh(), TEXT("RifleSocket"));
 
 	bIsCrouching = false;
+	bIsAiming = false;
+	bIsShooting = false;
 }
 
 void ALSCharacterBase::SetCharacterControlData(const ULSCharacterControlData* CharacterControlData)
